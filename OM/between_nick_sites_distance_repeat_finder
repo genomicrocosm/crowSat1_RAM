@@ -1,0 +1,16 @@
+# Alexander Suh, May 24, 2016. Acknowledgements: Douglas Scofield for subsum.awk
+
+# Subtract line from previous line to get the between nick distance, except for last line which is empty (sed '$d')
+cut -f6 contig892 |awk 'p{print $0-p}{p=$0}' |sed '$d' >contig892.fragments
+
+# Same as before, but print only distances < 5000 and larger ones as 0.
+cut -f6 contig892 |awk 'p{if($0-p<5000){print $0-p}else{print 0}}{p=$0}' |sed '$d' >contig892.fragments5000
+
+# Make subsums from non-zero lines, sort and print only those larger than 50 kb.
+awk -f subsums.awk contig892.fragments5000 |sort -k5nr |awk '{if($5>50000){print}}' |grep "subsum"
+
+# Combine the previous two commands in a one-liner:
+cut -f6 contig892 |awk 'p{if($0-p<5000){print $0-p}else{print 0}}{p=$0}' |sed '$d' | awk -f subsums.awk |sort -k5nr |awk '{if($5>50000){print}}' |grep "subsum"
+
+# Loop all this for lots of files:
+for i in $(ls contig*); do echo $i; cut -f6 $i |awk 'p{if($0-p<5000){print $0-p}else{print 0}}{p=$0}' |sed '$d' | awk -f subsums.awk |sort -k5nr |awk '{if($5>50000){print}}' |grep "subsum"; done
